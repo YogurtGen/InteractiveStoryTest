@@ -62,9 +62,22 @@ html,body{ width:100%;height:100%;background:var(--bg);
   .quot{ padding:.7rem .9rem; }
   #s7 .sc{ margin-top:0!important; }
 
-  /* HINT: pushed well above the next button, no overlap with content */
-  #hint{ bottom:72px;font-size:.62rem;letter-spacing:.2em; }
+  /* Fixed hint hidden on mobile — in-flow .scene-hint used instead */
+  #hint{ display:none!important; }
   #nextBtn{ bottom:16px;right:14px;width:44px;height:44px; }
+
+  /* In-flow hint scrolls with content */
+  .scene-hint{
+    display:block;
+    text-align:center;
+    font-family:'Cormorant Garamond',serif;
+    font-size:.68rem;letter-spacing:.28em;text-transform:uppercase;
+    color:var(--gold);opacity:.5;
+    padding:1.6rem 0 .5rem;
+    animation:blink 2.5s infinite;
+    pointer-events:none;
+    width:100%;
+  }
 }
 
 /* ═══ FIXED UI ═══ */
@@ -872,6 +885,18 @@ function showScene(n){
   const last=n>=TOTAL;
   document.getElementById('nextBtn').style.display=last?'none':'flex';
   document.getElementById('hint').style.display=last?'none':'block';
+
+  // Mobile: inject in-flow hint at bottom of scene (scrolls with content)
+  if(isMobile){
+    document.querySelectorAll('.scene-hint').forEach(el=>el.remove());
+    if(!last){
+      const mhint=document.createElement('div');
+      mhint.className='scene-hint';
+      mhint.textContent='geser atau ketuk ▶ untuk melanjutkan';
+      sc.appendChild(mhint);
+    }
+  }
+
   requestAnimationFrame(()=>{sc.scrollTop=0;});
   initScene(n);
 }
