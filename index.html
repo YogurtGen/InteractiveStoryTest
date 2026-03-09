@@ -20,23 +20,29 @@ html,body{ width:100%;height:100%;background:var(--bg);
 .scene{
   position:fixed;inset:0;display:none;opacity:0;
   transition:opacity .9s ease;
-  flex-direction:column;align-items:center;justify-content:center;
-  overflow:hidden;
+  flex-direction:column;align-items:center;
+  /* justify-content:center centres content when it fits;
+     overflow-y:auto lets it scroll when it overflows */
+  justify-content:center;
+  overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  /* top padding clears progress bar; bottom clears next button */
+  padding:10px 0 88px;
 }
 .scene.active{ display:flex; }
 .scene.visible{ opacity:1; }
 
-/* Epilogue scrollable on desktop */
-#s12{ justify-content:flex-start;overflow-y:auto;overflow-x:hidden;padding:40px 0 80px; }
+/* Cover stays perfectly centred, no padding needed */
+#s0{ justify-content:center;padding:0;overflow:hidden; }
 
 /* ═══ MOBILE ═══ */
 @media(max-width:700px){
   .scene{
     justify-content:flex-start;overflow-y:auto;
     overflow-x:hidden;-webkit-overflow-scrolling:touch;
-    padding:48px 0 130px;
+    padding:52px 0 140px;
   }
-  #s0{ justify-content:center;padding:0; }
+  #s0{ justify-content:center;padding:0;overflow:hidden; }
   #s12{ padding:40px 0 110px; }
 
   /* bg layers stay fixed to viewport */
@@ -62,22 +68,9 @@ html,body{ width:100%;height:100%;background:var(--bg);
   .quot{ padding:.7rem .9rem; }
   #s7 .sc{ margin-top:0!important; }
 
-  /* Fixed hint hidden on mobile — in-flow .scene-hint used instead */
   #hint{ display:none!important; }
   #nextBtn{ bottom:16px;right:14px;width:44px;height:44px; }
-
-  /* In-flow hint scrolls with content */
-  .scene-hint{
-    display:block;
-    text-align:center;
-    font-family:'Cormorant Garamond',serif;
-    font-size:.68rem;letter-spacing:.28em;text-transform:uppercase;
-    color:var(--gold);opacity:.5;
-    padding:1.6rem 0 .5rem;
-    animation:blink 2.5s infinite;
-    pointer-events:none;
-    width:100%;
-  }
+  .inline-hint{ font-size:.68rem;letter-spacing:.26em;padding:1.5rem 1rem .8rem; }
 }
 
 /* ═══ FIXED UI ═══ */
@@ -94,15 +87,36 @@ html,body{ width:100%;height:100%;background:var(--bg);
 #nextBtn:hover{ border-color:var(--gold);box-shadow:0 0 18px rgba(201,160,85,.25); }
 #nextBtn svg{ stroke:var(--gold);width:18px;height:18px; }
 
-/* HINT — desktop: 88px above bottom so it never clashes with content */
-#hint{
-  position:fixed;bottom:88px;left:50%;transform:translateX(-50%);
-  font-size:.72rem;letter-spacing:.25em;color:var(--gold);
-  opacity:.5;z-index:50;text-transform:uppercase;
-  font-family:'Cormorant Garamond',serif;
-  animation:blink 2.5s infinite;pointer-events:none;white-space:nowrap;
-}
+/* #hint legacy — hidden; replaced by in-flow .inline-hint injected per scene */
+#hint{ display:none!important; }
 @keyframes blink{0%,100%{opacity:.2;}50%{opacity:.65;}}
+
+/* ── IN-FLOW HINT — pure text, no button appearance ── */
+.inline-hint{
+  /* reset every browser button style */
+  appearance:none;-webkit-appearance:none;
+  border:none;outline:none;
+  background:transparent;
+  box-shadow:none;
+  margin:0;
+  /* layout */
+  display:block;width:100%;text-align:center;
+  /* typography — same as original hint */
+  font-family:'Cormorant Garamond',serif;
+  font-size:.75rem;letter-spacing:.32em;color:var(--gold);
+  text-transform:uppercase;
+  /* spacing below text panel */
+  padding:1.6rem 1rem .8rem;
+  /* interaction */
+  cursor:pointer;
+  position:relative;z-index:25;
+  pointer-events:auto!important;
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;
+  /* blink animation */
+  animation:blink 2.5s infinite;
+}
+.inline-hint:hover,.inline-hint:focus{ opacity:.9;outline:none; }
 
 /* ═══ CONTENT ═══ */
 .sc{ max-width:680px;width:92%;z-index:20;position:relative; }
@@ -621,6 +635,7 @@ html,body{ width:100%;height:100%;background:var(--bg);
 // ══ STATE ══
 let cur=0;const TOTAL=12;
 let audioCtx=null,rafIds={},fadeTimer=null;
+let bgMusic=null; // audio.mp3 background player
 const isMobile=window.matchMedia('(max-width:700px)').matches;
 // FIX #5: adaptive volume
 const VOL=isMobile?0.52:0.20;
@@ -876,32 +891,52 @@ function showScene(n){
   });
   const sc=document.getElementById('s'+n);if(!sc)return;
   sc.style.display='flex';sc.style.flexDirection='column';sc.style.alignItems='center';
-  // FIX #4: epilogue always scrollable
-  if(n===12){sc.style.justifyContent='flex-start';sc.style.overflowY='auto';}
-  else if(!isMobile){sc.style.justifyContent='center';sc.style.overflowY='hidden';}
+  // Mobile: start from top; desktop: center (CSS handles it, just set overflow)
+  if(isMobile){ sc.style.justifyContent='flex-start'; }
+  else { sc.style.justifyContent='center'; }
+  sc.style.overflowY='auto';
   sc.classList.add('active');
   requestAnimationFrame(()=>requestAnimationFrame(()=>{sc.style.opacity='1';sc.classList.add('visible');}));
   document.getElementById('prog').style.width=(n/TOTAL*100)+'%';
   const last=n>=TOTAL;
   document.getElementById('nextBtn').style.display=last?'none':'flex';
-  document.getElementById('hint').style.display=last?'none':'block';
+  // Legacy fixed hint always hidden
+  document.getElementById('hint').style.display='none';
 
-  // Mobile: inject in-flow hint at bottom of scene (scrolls with content)
-  if(isMobile){
-    document.querySelectorAll('.scene-hint').forEach(el=>el.remove());
-    if(!last){
-      const mhint=document.createElement('div');
-      mhint.className='scene-hint';
-      mhint.textContent='geser atau ketuk ▶ untuk melanjutkan';
-      sc.appendChild(mhint);
-    }
+  // ── Inject in-flow inline hint into this scene's .sc (or fallback to scene root) ──
+  document.querySelectorAll('.inline-hint').forEach(el=>el.remove());
+  if(!last){
+    // find the best container: .sc inside the active scene, or the scene itself
+    const container = sc.querySelector('.sc') || sc.querySelector('#s11inner') || sc;
+    const hint = document.createElement('button');
+    hint.className = 'inline-hint';
+    hint.type = 'button';
+    hint.setAttribute('aria-label', 'Lanjutkan');
+    hint.textContent = '✦  klik untuk melanjutkan  ✦';
+    hint.addEventListener('click', function(e){ e.stopPropagation(); advance(); });
+    hint.addEventListener('touchend', function(e){ e.stopPropagation(); e.preventDefault(); advance(); });
+    container.appendChild(hint);
   }
 
   requestAnimationFrame(()=>{sc.scrollTop=0;});
   initScene(n);
 }
 
-function advance(){if(cur<TOTAL){pageTurn();cur++;showScene(cur);}}
+// Play audio.mp3 as background music (called once on first advance)
+function playBgMusic(){
+  if(bgMusic) return; // already playing
+  bgMusic = new Audio('audio.mp3');
+  bgMusic.loop = true;
+  bgMusic.volume = isMobile ? 0.55 : 0.22;
+  bgMusic.play().catch(()=>{}); // ignore autoplay policy errors gracefully
+}
+
+function advance(){
+  if(cur<TOTAL){
+    if(cur===0) playBgMusic(); // start music when "Mulai Membaca" pressed
+    pageTurn();cur++;showScene(cur);
+  }
+}
 
 // FIX #7: full reset including bb10 fade state
 function restart(){
@@ -909,7 +944,9 @@ function restart(){
   const bb=document.getElementById('bb10');
   if(bb){bb.style.transition='none';bb.style.opacity='1';bb.style.filter='none';
     setTimeout(()=>{bb.style.transition='opacity 3.5s ease,filter 3.5s ease';},50);}
-  cur=0;if(audioCtx){audioCtx.close();audioCtx=null;}
+  cur=0;
+  if(audioCtx){audioCtx.close();audioCtx=null;}
+  if(bgMusic){bgMusic.pause();bgMusic.currentTime=0;bgMusic=null;}
   showScene(0);
 }
 
