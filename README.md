@@ -60,7 +60,7 @@ Pure HTML + CSS + vanilla JS. No libraries. The audio is synthesized on the fly 
 
 ## Note
 
-This is a personal project and a learning experiment — not a polished product. The story is original, written in Indonesian, loosely inspired by something I once wrote privately. Carlotta is a fictional character.
+This is a personal project and a learning experiment — not a polished product. The story is original, written in Indonesian, loosely inspired by something I once wrote privately. Carlotta is a fictional character from a game (Wuthering Wave).
 
 ---
 
