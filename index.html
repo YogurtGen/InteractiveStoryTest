@@ -21,27 +21,25 @@ html,body{ width:100%;height:100%;background:var(--bg);
   position:fixed;inset:0;display:none;opacity:0;
   transition:opacity .9s ease;
   flex-direction:column;align-items:center;
-  /* justify-content:center centres content when it fits;
-     overflow-y:auto lets it scroll when it overflows */
-  justify-content:center;
+  /* flex-start + margin:auto on .sc = centers when room, scrolls when overflow */
+  justify-content:flex-start;
   overflow-y:auto;overflow-x:hidden;
   -webkit-overflow-scrolling:touch;
-  /* top padding clears progress bar; bottom clears next button */
-  padding:10px 0 88px;
+  padding:16px 0 88px;
 }
 .scene.active{ display:flex; }
 .scene.visible{ opacity:1; }
 
-/* Cover stays perfectly centred, no padding needed */
+/* Cover: perfectly centred, no scroll */
 #s0{ justify-content:center;padding:0;overflow:hidden; }
 
 /* ═══ MOBILE ═══ */
 @media(max-width:700px){
   .scene{
-    justify-content:flex-start;overflow-y:auto;
-    overflow-x:hidden;-webkit-overflow-scrolling:touch;
     padding:52px 0 140px;
   }
+  /* On mobile .sc should NOT use margin:auto — start from top */
+  .sc{ margin-top:0;margin-bottom:0; }
   #s0{ justify-content:center;padding:0;overflow:hidden; }
   #s12{ padding:40px 0 110px; }
 
@@ -119,7 +117,7 @@ html,body{ width:100%;height:100%;background:var(--bg);
 .inline-hint:hover,.inline-hint:focus{ opacity:.9;outline:none; }
 
 /* ═══ CONTENT ═══ */
-.sc{ max-width:680px;width:92%;z-index:20;position:relative; }
+.sc{ max-width:680px;width:92%;z-index:20;position:relative;margin-top:auto;margin-bottom:auto; }
 .tp{
   background:linear-gradient(135deg,rgba(10,4,12,.93),rgba(18,7,14,.90));
   border:1px solid rgba(201,160,85,.22);
@@ -332,7 +330,11 @@ html,body{ width:100%;height:100%;background:var(--bg);
   <div class="sc" style="z-index:20;text-align:center;">
     <div class="cname" style="opacity:0;animation:fadeIn 1.5s ease .6s forwards;">Carlotta.</div>
     <!-- FIX #9: mascot.png — fallback to SVG if file missing -->
-    <div id="charWrap">
+    <div id="charWrap" style="position:relative;">
+      <!-- decorative sparkles — inside charWrap so they never overflow scene bounds -->
+      <div class="sp" style="position:absolute;top:8px;right:-4px;width:7px;height:7px;animation-delay:0s;animation-duration:2.2s;z-index:2;pointer-events:none;"></div>
+      <div class="sp" style="position:absolute;top:35px;left:-4px;width:5px;height:5px;animation-delay:.6s;animation-duration:1.8s;z-index:2;pointer-events:none;"></div>
+      <div class="sp" style="position:absolute;top:0px;left:38%;width:6px;height:6px;animation-delay:1.2s;animation-duration:2.5s;z-index:2;pointer-events:none;"></div>
       <img src="mascot.png" alt="Carlotta"
            onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
       <svg style="display:none;filter:drop-shadow(0 0 22px rgba(184,212,232,.4))"
@@ -368,12 +370,7 @@ html,body{ width:100%;height:100%;background:var(--bg);
         <g filter="url(#glow)"><polygon points="105,22 107,30 115,30 109,35 111,43 105,38 99,43 101,35 95,30 103,30" fill="#e8f5ff" opacity=".9"><animateTransform attributeName="transform" type="rotate" from="0 105 32" to="360 105 32" dur="9s" repeatCount="indefinite"/><animate attributeName="opacity" values=".6;1;.6" dur="2.5s" repeatCount="indefinite"/></polygon></g>
       </svg>
     </div>
-    <!-- sparkles relative to char -->
-    <div style="position:relative;height:0;overflow:visible;">
-      <div class="sp" style="position:absolute;top:-310px;left:calc(50% + 72px);width:7px;height:7px;animation-delay:0s;animation-duration:2.2s;"></div>
-      <div class="sp" style="position:absolute;top:-275px;left:calc(50% - 92px);width:5px;height:5px;animation-delay:.6s;animation-duration:1.8s;"></div>
-      <div class="sp" style="position:absolute;top:-325px;left:calc(50% - 22px);width:6px;height:6px;animation-delay:1.2s;animation-duration:2.5s;"></div>
-    </div>
+    <!-- sparkles positioned relative to charWrap (overflow:hidden keeps them inside) -->
     <div class="tp" style="text-align:left;margin-top:.7rem;">
       <p class="st">Dia berdiri di bawah jendela kaca patri yang memantulkan cahaya senja, rambut putihnya seperti kristal yang disinari matahari terbenam. Matanya—<em>abu-abu seperti kabut yang menyelimuti danau di pagi hari</em>—menatap langsung ke arahku, dingin namun memikat.<br><br>Gaun merahnya kontras dengan nuansa cokelat dan emas tua perpustakaan. Seakan dialah <em>satu-satunya warna di dunia yang memudar ini.</em></p>
     </div>
@@ -891,9 +888,7 @@ function showScene(n){
   });
   const sc=document.getElementById('s'+n);if(!sc)return;
   sc.style.display='flex';sc.style.flexDirection='column';sc.style.alignItems='center';
-  // Mobile: start from top; desktop: center (CSS handles it, just set overflow)
-  if(isMobile){ sc.style.justifyContent='flex-start'; }
-  else { sc.style.justifyContent='center'; }
+  sc.style.justifyContent='flex-start';
   sc.style.overflowY='auto';
   sc.classList.add('active');
   requestAnimationFrame(()=>requestAnimationFrame(()=>{sc.style.opacity='1';sc.classList.add('visible');}));
