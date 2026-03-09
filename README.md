@@ -4,6 +4,8 @@
 
 A small interactive web story — a personal experiment in turning an old piece of writing into something you can actually experience in a browser.
 
+**[▶ Read it here](https://yogurtgen.github.io/InteractiveStoryCarlotta/)**
+
 ---
 
 ## About
